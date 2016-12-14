@@ -13,7 +13,7 @@ class WebSocketTestCase(tornado.testing.AsyncHTTPTestCase):
         return app
 
     @tornado.testing.gen_test
-    def test_websocket_connect(self):
+    def test_websocket_echo(self):
         ws_url = "ws://localhost:{0}/websocket".format(self.get_http_port())
         ws_client = yield tornado.websocket.websocket_connect(ws_url)
 
@@ -21,4 +21,3 @@ class WebSocketTestCase(tornado.testing.AsyncHTTPTestCase):
         ws_client.write_message(message)
         response = yield ws_client.read_message()
         self.assertEqual(response, message)
-
