@@ -20,7 +20,8 @@ class MainHandler(tornado.web.RequestHandler):
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
-        print("WebSocket opened")
+        body = self.application.read_all_input()
+        self.write_message(body)
 
     def on_message(self, message):
         self.write_message(message)
@@ -30,7 +31,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 
 class Application(tornado.web.Application):
-    def __init__(self):
+    def __init__(self, input_stream):
         handlers = [
             (r"/", MainHandler),
             (r"/websocket", WebSocketHandler),
@@ -40,7 +41,23 @@ class Application(tornado.web.Application):
             template_path=os.path.join(BASE_DIR, 'templates'),
             static_path=os.path.join(BASE_DIR, 'static'),
         )
+        self.stream = input_stream
         super(Application, self).__init__(handlers, **settings)
+
+    def _read_in_chunks(self, file_object, chunk_size=1024):
+        while True:
+            data = file_object.read(chunk_size)
+            if not data:
+                break
+            yield data
+
+    def read_all_input(self):
+        body = ""
+        for chunk in self._read_in_chunks(self.stream):
+            body += chunk
+            if len(body) > 1e6:
+                raise RuntimeError("The request body is too long")
+        return body
 
 
 def main():
