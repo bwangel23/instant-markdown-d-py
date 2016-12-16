@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
+import subprocess
 
 import tornado
 import tornado.web
@@ -9,8 +11,8 @@ import tornado.websocket
 from tornado.ioloop import IOLoop
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-listen_ip =  '0.0.0.0' if os.environ.get('INSTANT_MARKDOWN_OPEN_TO_THE_WORLD') else '127.0.0.1'
-listen_port = os.environ.get('INSTANT_MARKDOWN_DAEMON_PORT', 8090)
+LISTEN_IP =  '0.0.0.0' if os.environ.get('INSTANT_MARKDOWN_OPEN_TO_THE_WORLD') else '127.0.0.1'
+PORT = os.environ.get('INSTANT_MARKDOWN_DAEMON_PORT', 8090)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -59,12 +61,23 @@ class Application(tornado.web.Application):
                 raise RuntimeError("The request body is too long")
         return body
 
+    def open_the_browser(self):
+        # This function is not covered by unit test
+        url = "http://localhost:{0}".format(PORT)
+        if sys.platform == "win32":
+            subprocess.Popen(["start", "/b", url])
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", "-g", url])
+        else:   # assume unix/linux
+            subprocess.Popen(["xdg-open", url])
+
 
 def main():
-    app = Application()
-    app.listen(listen_port, listen_ip)
+    app = Application(sys.stdin)
+    app.listen(PORT, LISTEN_IP)
+    app.open_the_browser()
     IOLoop.current().start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
