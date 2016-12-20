@@ -10,18 +10,24 @@ from instant_markdown_d import Application
 
 class WebSocketTestCase(tornado.testing.AsyncHTTPTestCase):
     def get_app(self):
-        self.connected_body = "Hi, This is the init message"
-        self.stream = io.StringIO(self.connected_body)
         app = Application(self.stream)
         return app
+
+    def setUp(self):
+        self.server_init_message = "Hi, This is the init message"
+        self.stream = io.StringIO(self.server_init_message)
+        super(WebSocketTestCase, self).setUp()
+
+    def tearDown(self):
+        super(WebSocketTestCase, self).tearDown()
+        self.stream.close()
 
     @tornado.testing.gen_test
     def test_get_body_on_connected(self):
         ws_url = "ws://localhost:{0}/websocket".format(self.get_http_port())
-        ws_client = yield tornado.websocket.websocket_connect(ws_url)
-
-        response = yield ws_client.read_message()
-        self.assertEqual(response, self.connected_body)
+        self.ws_client = yield tornado.websocket.websocket_connect(ws_url)
+        response = yield self.ws_client.read_message()
+        self.assertEqual(response, self.server_init_message)
 
     @tornado.testing.gen_test
     def test_update_the_body_by_put(self):
