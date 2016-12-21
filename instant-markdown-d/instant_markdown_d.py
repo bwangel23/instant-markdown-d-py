@@ -9,6 +9,7 @@ import tornado
 import tornado.web
 import tornado.websocket
 from tornado.ioloop import IOLoop
+from tornado.escape import json_encode
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 LISTEN_IP =  '0.0.0.0' if os.environ.get('INSTANT_MARKDOWN_OPEN_TO_THE_WORLD') else '127.0.0.1'
@@ -18,6 +19,9 @@ PORT = os.environ.get('INSTANT_MARKDOWN_DAEMON_PORT', 8090)
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('index.html')
+
+    def put(self):
+        self.write(json_encode({"status": "ok"}))
 
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
